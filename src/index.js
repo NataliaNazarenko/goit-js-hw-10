@@ -11,7 +11,6 @@ const refs = {
 const DEBOUNCE_DELAY = 300;
 
 refs.input.addEventListener('input', debounce(onCurrentInput, DEBOUNCE_DELAY));
-// refs.input.addEventListener('input', onCurrentInput);
 
 function onCurrentInput(event) {
   event.preventDefault();
@@ -24,18 +23,16 @@ function onCurrentInput(event) {
         Notify.info('Too many matches found. Please enter a more specific name.');
       } else if (countries.length > 2 && countries.length <= 10) {
         const markup = countries.reduce((markup, country) => markup + listCountries(country), '');
+        refs.info.innerHTML = '';
         updateListCountries(markup);
+      } else if (countries.length === 1) {
+        const markup = countries.reduce((markup, country) => renderCountriesCard(country), '');
+        refs.list.innerHTML = '';
+        updateCountriesCard(markup);
       }
-      console.log(countries);
+      return;
     })
     .catch(onFetchError);
-}
-
-function onFetchError(error) {
-  if (error.status === 404) {
-    Notify.failure('Oops, there is no country with that name');
-  }
-  console.log(error.status);
 }
 
 function listCountries({ flags, name }) {
@@ -43,7 +40,7 @@ function listCountries({ flags, name }) {
             <img class="country__image" src="${flags.svg}" alt="${
     flags.alt || `The flag of ${name.official}`
   }"/>
-            <p class="country__text"> ${name.common}</p>
+            <p class="country__name"> ${name.common}</p>
         </li>`;
 }
 
@@ -51,4 +48,24 @@ function updateListCountries(markup) {
   refs.list.innerHTML = markup;
 }
 
-function renderCountriesCard() {}
+function renderCountriesCard({ name, capital, population, flags, languages }) {
+  return `<h2 class="country-title">${name.common}</h2>
+                <img class="country__image" src="${flags.svg}" alt="${
+    flags.alt || `The flag of ${name.official}`
+  }"/>
+        <p class="country__text">Capital: ${capital}</p>
+        <p class="country__text">Population: ${population}</p>
+        <p class="country__text">Languages: ${Object.values(languages)}</p>`;
+}
+
+function updateCountriesCard(markup) {
+  refs.info.innerHTML = markup;
+}
+
+function onFetchError(error) {
+  if (!error.status) {
+    refs.list.innerHTML = '';
+    refs.info.innerHTML = '';
+    Notify.failure('Oops, there is no country with that name');
+  }
+}
